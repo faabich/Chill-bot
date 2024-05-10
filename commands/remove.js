@@ -9,7 +9,6 @@ module.exports = {
             option.setName("number").setDescription("N°(queue)").setRequired(true)
         ),
     execute: async ({ interaction }) => {
-        if (interaction.options.getString() === "number"){
             let number = interaction.options.getString("number")
             // Get the current queue
             const queue = useQueue(interaction.guild.id);
@@ -22,8 +21,6 @@ module.exports = {
             // Deletes all the songs from the queue and exits the channel
             queue.removeTrack(number - 1); //Remember queue index starts from 0, not 1
     
-            await interaction.reply("Playlist mélangée")
-        }
-
+            await interaction.reply("Son retiré !")
     },
 }
