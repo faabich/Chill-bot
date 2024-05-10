@@ -4,7 +4,7 @@ const { useQueue } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("remove")
-        .setDescription("Supprime un son de la playlist(développement)")
+        .setDescription("Supprime un son de la playlist")
         .addStringOption(option =>
             option.setName("number").setDescription("N°(queue)").setRequired(true)
         ),
