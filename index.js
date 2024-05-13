@@ -1,13 +1,13 @@
 require('dotenv').config();
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
-const { Player } = require("discord-player");
+const { Colors, Client, GatewayIntentBits, Collection, ActionRowBuilder,
+   ComponentType, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
+const { Player, useQueue, useHistory } = require("discord-player");
 const { spotifyApi } = require('./Spotify/API/App');
 
 const fs = require('fs');
 const path = require('path');
-
 
 const client = new Client({
    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates, 'GuildVoiceStates']
@@ -73,9 +73,103 @@ const player = new Player(client);
 player.extractors.loadDefault();
 
 // this event is emitted whenever discord-player starts to play a track
-player.events.on('playerStart', (queue, track) => {
+player.events.on('playerStart', async (queue, track) => {
+   const history = useHistory(queue.guild.id);
    // we will later define queue.metadata object while creating the queue
-   //queue.metadata.channel.send(`Started playing **${track.title}**!`);
+   const channel = client.channels.cache.get('1095014105296928778');
+
+   const prev = new ButtonBuilder()
+      .setCustomId('prev')
+      .setEmoji('⏪')
+      .setStyle(ButtonStyle.Secondary);
+
+   const playPause = new ButtonBuilder()
+      .setCustomId('play-pause')
+      .setEmoji('⏯️')
+      .setStyle(ButtonStyle.Secondary);
+
+   const next = new ButtonBuilder()
+      .setCustomId('next')
+      .setEmoji('⏩')
+      .setStyle(ButtonStyle.Secondary);
+
+   const stop = new ButtonBuilder()
+      .setCustomId('stop')
+      .setEmoji('⏹️')
+      .setStyle(ButtonStyle.Secondary);
+
+   const shuffle = new ButtonBuilder()
+      .setCustomId('shuffle')
+      .setEmoji('🔀')
+      .setStyle(ButtonStyle.Secondary);
+
+   const link = new ButtonBuilder()
+      .setEmoji('🌐')
+      .setURL(track.url)
+      .setStyle(ButtonStyle.Link);
+
+   const row = new ActionRowBuilder()
+      .addComponents(prev, playPause, next, stop, shuffle);
+
+      const lastMessageId = channel.lastMessageId;
+      if (lastMessageId){
+         channel.messages.fetch(lastMessageId).then(message => message.delete())
+      }
+
+   /* channel.messages.fetch({ limit: 1 }).then(messages => {
+      let lastMessage = messages.first();
+
+      if (!lastMessage.author.bot) {
+         // The author of the last message wasn't a bot
+      }
+   })
+      .catch(console.error); */
+
+   const reply = await channel.send({
+      embeds: [
+         new EmbedBuilder()
+            .setColor(Colors.Orange)
+            .setTitle(`**En train de jouer**`)
+            .setThumbnail(track.thumbnail)
+            .setDescription(`${track.title} - ${track.author} [${track.duration}]\n Demandé par @${track.requestedBy.username}`)
+      ],
+      components: [row]
+   });
+
+   //const filter = i => i.user.id === interaction.user.id;
+
+   const collector = reply.createMessageComponentCollector({
+      componentType: ComponentType.Button
+      //filter,
+   })
+
+   collector.on('collect', async (interaction) => {
+      if (interaction.customId === 'prev') {
+         await history.previous();
+        await interaction.reply("Son précédent");
+         return;
+      }
+      if (interaction.customId === 'play-pause') {
+         queue.node.setPaused(!queue.node.isPaused());
+        await interaction.reply(queue.node.isPaused() ? "Pause" : "Play");
+         return;
+      }
+      if (interaction.customId === 'next') {
+         queue.node.skip();
+        await interaction.reply("Son suivant");
+         return;
+      }
+      if (interaction.customId === 'stop') {
+         queue.delete();
+         await interaction.reply("Playlist arrêtée");
+         return;
+      }
+      if (interaction.customId === 'shuffle') {
+         queue.tracks.shuffle();
+         await interaction.reply("Playlist mélangée");
+         return;
+      }
+   })
 });
 
 

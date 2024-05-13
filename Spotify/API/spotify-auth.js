@@ -1,23 +1,10 @@
-/**
- * This example is using the Authorization Code flow.
- *
- * In root directory run
- *
- *     npm install express
- *
- * then run with the followinng command. If you don't have a client_id and client_secret yet,
- * create an application on Create an application here: https://developer.spotify.com/my-applications to get them.
- * Make sure you whitelist the correct redirectUri in line 26.
- *
- *     node access-token-server.js "<Client ID>" "<Client Secret>"
- *
- *  and visit <http://localhost:3000/login> in your Browser.
- */
 const SpotifyWebApi = require('spotify-web-api-node');
 const querystring = require('querystring')
 const express = require('express');
 const axios = require('axios');
 var app = express();
+
+var PORT = 8113;
 
 const logger = (req, res, next) => {
    console.log(`
@@ -82,7 +69,7 @@ app.get('/auth/spotify', (req, res) => {
 });
 
 // When our access token will expire
-var tokenExpirationEpoch;
+let tokenExpirationEpoch;
 app.get('/callback', (req, res) => {
    // TUTORIAL VID
    const code = req.query.code || null;
@@ -135,15 +122,15 @@ app.get('/refresh_token', (req, res) => {
       });
 });
 
-app.listen(8113, () =>
+app.listen(PORT, () =>
     console.log(
-        'HTTP Server up. Now go to http://us-nyc.pylex.me:8113/auth/spotify in your browser.'
+        `HTTP Server up. Now go to http://localhost:${PORT}/auth/spotify in your browser.`
     )
 );
 
 // Auto refresh token
 setInterval(function () {
-   if (tokenExpirationEpoch < 10) {
+   if (Math.floor(tokenExpirationEpoch - new Date().getTime() / 1000) < 11) {
       // Refresh token and print the new time to expiration.
       spotifyApi.refreshAccessToken().then(
          function (data) {
@@ -160,6 +147,6 @@ setInterval(function () {
          }
       );
    }
-}, 10000);
+}, 4000);
 
 module.exports = { spotifyApi, getPlaylist }

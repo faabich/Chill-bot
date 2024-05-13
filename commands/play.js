@@ -1,10 +1,12 @@
 const { SlashCommandBuilder } = require("@discordjs/builders")
-const { EmbedBuilder, Colors, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder, ComponentType } = require("discord.js")
-const { QueryType, useMainPlayer } = require("discord-player");
+const { EmbedBuilder, Colors, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
+    ActionRowBuilder, ComponentType, ButtonBuilder, ButtonStyle } = require("discord.js")
+const { QueryType, useMainPlayer  } = require("discord-player");
 const { getPlaylist } = require("../Spotify/API/spotify-auth");
 
 async function playUrl(interaction, url) {
     const player = useMainPlayer();
+    await interaction.deferReply();
     //const result = new SearchResult(player, _data)
     const result = await player.search(url, {
         requestedBy: interaction.user
@@ -12,7 +14,7 @@ async function playUrl(interaction, url) {
     //console.log(result);
     addQueue(interaction, result.tracks);
 
-    return interaction.reply({
+    await interaction.editReply({
         embeds: [
             new EmbedBuilder()
                 .setColor(Colors.Orange)
@@ -35,7 +37,7 @@ async function addQueue(interaction, track) {
             leaveOnEndCooldown: 15000, //Cooldown in ms
             leaveOnEmpty: true, //If the player should leave when the voice channel is empty
             leaveOnEmptyCooldown: 300000, //Cooldown in ms
-            volume: 50,
+            volume: 25,
             skipOnNoStream: true,
         },
     });
@@ -60,6 +62,7 @@ async function addQueue(interaction, track) {
         queue.tasksQueue.release();
     }
 }
+
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -252,7 +255,7 @@ module.exports = {
                     return;
                 }
 
-                const playlistFound = playlistData.slice(0, 10).find(playlist => playlist.external_urls.spotify == interaction.values);
+                const playlistFound = playlistData.slice(0, 20).find(playlist => playlist.external_urls.spotify == interaction.values);
                 playlistUrl = playlistFound.external_urls.spotify;
                 playUrl(interaction, playlistUrl)
             })

@@ -12,7 +12,7 @@ module.exports = {
 
     if (!queue)
     {
-      await interaction.reply("There are no songs in the queue")
+      await interaction.reply("Pas de son dans la playlist")
       return;
     }
 
