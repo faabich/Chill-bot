@@ -2,10 +2,8 @@ require('dotenv').config();
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { Colors, Client, GatewayIntentBits, Collection, ActionRowBuilder,
-   ComponentType, ButtonBuilder, ButtonStyle, EmbedBuilder, 
-   ButtonInteraction } = require('discord.js');
-const { Player, useQueue, useHistory } = require("discord-player");
-const { spotifyApi } = require('./Spotify/API/App');
+   ComponentType, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
+const { Player, useHistory } = require("discord-player");
 
 const fs = require('fs');
 const path = require('path');
@@ -37,7 +35,7 @@ client.player = new Player(client, {
       liveBuffer: 1 << 62,
       dlChunkSize: 0, //disabling chunking is recommended in discord bot
       bitrate: 128,
-      quality: "lowestaudio"
+      quality: "highestaudio"
    }
 })
 
@@ -69,19 +67,27 @@ client.on("interactionCreate", async (interaction) => {
    }
 });
 
+var channelID;
+client.on('messageCreate', (message) => {
+   if (message.author.bot){
+      channelID = message.channelId;
+   }
+})
+
 const player = new Player(client);
 
 player.extractors.loadDefault();
+
 
 // this event is emitted whenever discord-player starts to play a track
 player.events.on('playerStart', async (queue, track) => {
    const history = useHistory(queue.guild.id);
    // we will later define queue.metadata object while creating the queue
-   const channel = client.channels.cache.get('1095014105296928778');
+   const channel = client.channels.cache.get(channelID);
 
    const prev = new ButtonBuilder()
       .setCustomId('prev')
-      .setEmoji('⏪')
+      .setEmoji('⏮')
       .setStyle(ButtonStyle.Secondary);
 
    const playPause = new ButtonBuilder()
@@ -91,7 +97,7 @@ player.events.on('playerStart', async (queue, track) => {
 
    const next = new ButtonBuilder()
       .setCustomId('next')
-      .setEmoji('⏩')
+      .setEmoji('⏭')
       .setStyle(ButtonStyle.Secondary);
 
    const stop = new ButtonBuilder()
@@ -112,10 +118,10 @@ player.events.on('playerStart', async (queue, track) => {
    const row = new ActionRowBuilder()
       .addComponents(prev, playPause, next, stop, shuffle);
 
-   const lastMessageId = channel.lastMessageId;
+   /* const lastMessageId = channel.lastMessageId;
    if (lastMessageId) {
       channel.messages.fetch(lastMessageId).then(message => message.delete())
-   }
+   } */
 
    const reply = await channel.send({
       embeds: [
@@ -139,6 +145,7 @@ player.events.on('playerStart', async (queue, track) => {
       if (interaction.customId === 'prev') {
          await history.previous();
          await interaction.update("Son précédent");
+         return;
       }
       if (interaction.customId === 'play-pause') {
          queue.node.setPaused(!queue.node.isPaused());
@@ -148,14 +155,17 @@ player.events.on('playerStart', async (queue, track) => {
       if (interaction.customId === 'next') {
          queue.node.skip();
          await interaction.update("Son suivant");
+         return;
       }
       if (interaction.customId === 'stop') {
          queue.delete();
          await interaction.update("Playlist arrêtée");
+         return;
       }
       if (interaction.customId === 'shuffle') {
          queue.tracks.shuffle();
          await interaction.update("Playlist mélangée");
+         return;
       }
    })
 });

@@ -70,7 +70,7 @@ module.exports = {
         .setDescription("play a song from YouTube.")
         .addSubcommand(subcommand =>
             subcommand
-                .setName("search-song-spotify")
+                .setName("search-spotify-song")
                 .setDescription("Recherche un son et le joue [+ajoute à la liste]")
                 .addStringOption(option =>
                     option.setName("search").setDescription("mots-clés").setRequired(true)
@@ -78,7 +78,7 @@ module.exports = {
         )
         .addSubcommand(subcommand =>
             subcommand
-                .setName("search-playlist-spotify")
+                .setName("search-spotify-playlist")
                 .setDescription("Recherche une playlist et le joue [+ajoute à la liste]")
                 .addStringOption(option =>
                     option.setName("search").setDescription("mots-clés").setRequired(true)
@@ -159,7 +159,7 @@ module.exports = {
                 ]
             });
         }
-        else if (interaction.options.getSubcommand() === "search-song-spotify") {
+        else if (interaction.options.getSubcommand() === "search-spotify-song") {
             const player = useMainPlayer();
             let query = interaction.options.getString("search")
             const results = await player.search(query, {
@@ -204,7 +204,7 @@ module.exports = {
                 useMainPlayer();
 
                 const result = results.tracks.slice(0, 10).find(track => track.url == interaction.values);
-                
+
                 addQueue(interaction, result);
 
                 return interaction.reply({
@@ -220,7 +220,7 @@ module.exports = {
 
             //execute(interaction);
 
-        } else if (interaction.options.getSubcommand() === "search-playlist-spotify") {
+        } else if (interaction.options.getSubcommand() === "search-spotify-playlist") {
             let query = interaction.options.getString("search")
             const playlistData = await getPlaylist(query);
             if (!playlistData) return await interaction.reply("Pas trouvé de playlist");
@@ -263,5 +263,5 @@ module.exports = {
                 playUrl(interaction, playlistUrl)
             })
         }
-    },
+    }, 
 }
