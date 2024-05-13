@@ -2,7 +2,8 @@ require('dotenv').config();
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { Colors, Client, GatewayIntentBits, Collection, ActionRowBuilder,
-   ComponentType, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
+   ComponentType, ButtonBuilder, ButtonStyle, EmbedBuilder, 
+   ButtonInteraction } = require('discord.js');
 const { Player, useQueue, useHistory } = require("discord-player");
 const { spotifyApi } = require('./Spotify/API/App');
 
@@ -111,19 +112,10 @@ player.events.on('playerStart', async (queue, track) => {
    const row = new ActionRowBuilder()
       .addComponents(prev, playPause, next, stop, shuffle);
 
-      const lastMessageId = channel.lastMessageId;
-      if (lastMessageId){
-         channel.messages.fetch(lastMessageId).then(message => message.delete())
-      }
-
-   /* channel.messages.fetch({ limit: 1 }).then(messages => {
-      let lastMessage = messages.first();
-
-      if (!lastMessage.author.bot) {
-         // The author of the last message wasn't a bot
-      }
-   })
-      .catch(console.error); */
+   const lastMessageId = channel.lastMessageId;
+   if (lastMessageId) {
+      channel.messages.fetch(lastMessageId).then(message => message.delete())
+   }
 
    const reply = await channel.send({
       embeds: [
@@ -146,28 +138,24 @@ player.events.on('playerStart', async (queue, track) => {
    collector.on('collect', async (interaction) => {
       if (interaction.customId === 'prev') {
          await history.previous();
-        await interaction.reply("Son précédent");
-         return;
+         await interaction.update("Son précédent");
       }
       if (interaction.customId === 'play-pause') {
          queue.node.setPaused(!queue.node.isPaused());
-        await interaction.reply(queue.node.isPaused() ? "Pause" : "Play");
+         await interaction.update(queue.node.isPaused() ? "Pause" : "Play");
          return;
       }
       if (interaction.customId === 'next') {
          queue.node.skip();
-        await interaction.reply("Son suivant");
-         return;
+         await interaction.update("Son suivant");
       }
       if (interaction.customId === 'stop') {
          queue.delete();
-         await interaction.reply("Playlist arrêtée");
-         return;
+         await interaction.update("Playlist arrêtée");
       }
       if (interaction.customId === 'shuffle') {
          queue.tracks.shuffle();
-         await interaction.reply("Playlist mélangée");
-         return;
+         await interaction.update("Playlist mélangée");
       }
    })
 });

@@ -201,7 +201,10 @@ module.exports = {
                     return;
                 }
 
+                useMainPlayer();
+
                 const result = results.tracks.slice(0, 10).find(track => track.url == interaction.values);
+                
                 addQueue(interaction, result);
 
                 return interaction.reply({
