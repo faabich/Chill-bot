@@ -118,10 +118,10 @@ player.events.on('playerStart', async (queue, track) => {
    const row = new ActionRowBuilder()
       .addComponents(prev, playPause, next, stop, shuffle);
 
-   /* const lastMessageId = channel.lastMessageId;
+   const lastMessageId = channel.lastMessageId;
    if (lastMessageId) {
       channel.messages.fetch(lastMessageId).then(message => message.delete())
-   } */
+   }
 
    const reply = await channel.send({
       embeds: [

@@ -70,7 +70,7 @@ module.exports = {
         .setDescription("play a song from YouTube.")
         .addSubcommand(subcommand =>
             subcommand
-                .setName("search-spotify-song")
+                .setName("search-song")
                 .setDescription("Recherche un son et le joue [+ajoute à la liste]")
                 .addStringOption(option =>
                     option.setName("search").setDescription("mots-clés").setRequired(true)
@@ -78,7 +78,7 @@ module.exports = {
         )
         .addSubcommand(subcommand =>
             subcommand
-                .setName("search-spotify-playlist")
+                .setName("search-playlist")
                 .setDescription("Recherche une playlist et le joue [+ajoute à la liste]")
                 .addStringOption(option =>
                     option.setName("search").setDescription("mots-clés").setRequired(true)
@@ -159,7 +159,7 @@ module.exports = {
                 ]
             });
         }
-        else if (interaction.options.getSubcommand() === "search-spotify-song") {
+        else if (interaction.options.getSubcommand() === "search-song") {
             const player = useMainPlayer();
             let query = interaction.options.getString("search")
             const results = await player.search(query, {
@@ -220,7 +220,7 @@ module.exports = {
 
             //execute(interaction);
 
-        } else if (interaction.options.getSubcommand() === "search-spotify-playlist") {
+        } else if (interaction.options.getSubcommand() === "search-playlist") {
             let query = interaction.options.getString("search")
             const playlistData = await getPlaylist(query);
             if (!playlistData) return await interaction.reply("Pas trouvé de playlist");
