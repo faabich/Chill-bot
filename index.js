@@ -81,14 +81,8 @@ player.extractors.loadDefault();
 var lastMessageId;
 // this event is emitted whenever discord-player starts to play a track
 player.events.on('playerStart', async (queue, track) => {
-   const history = useHistory(queue.guild.id);
    // we will later define queue.metadata object while creating the queue
    const channel = client.channels.cache.get(channelID);
-
-   const prev = new ButtonBuilder()
-      .setCustomId('prev')
-      .setEmoji('⏮')
-      .setStyle(ButtonStyle.Secondary);
 
    const playPause = new ButtonBuilder()
       .setCustomId('play-pause')
@@ -110,13 +104,18 @@ player.events.on('playerStart', async (queue, track) => {
       .setEmoji('🔀')
       .setStyle(ButtonStyle.Secondary);
 
+   const queueSearch = new ButtonBuilder()
+      .setCustomId('queue')
+      .setEmoji('🔍')
+      .setStyle(ButtonStyle.Secondary);
+
    const link = new ButtonBuilder()
       .setEmoji('🌐')
       .setURL(track.url)
       .setStyle(ButtonStyle.Link);
 
    const row = new ActionRowBuilder()
-      .addComponents(prev, playPause, next, stop, shuffle);
+      .addComponents(playPause, next, stop, shuffle, queueSearch);
 
    if (lastMessageId) {
       await channel.messages.fetch(lastMessageId).then(message => message.delete())
@@ -158,11 +157,6 @@ player.events.on('playerStart', async (queue, track) => {
    })
 
    collector.on('collect', async (interaction) => {
-      if (interaction.customId === 'prev') {
-         await history.previous();
-         await interaction.update("Son précédent")
-         //.then(await channel.messages.fetch(lastMessageId).then(message => message.delete()));
-      }
       if (interaction.customId === 'play-pause') {
          queue.node.setPaused(!queue.node.isPaused());
          await interaction.update(queue.node.isPaused() ? "Pause" : "Play");
@@ -170,7 +164,6 @@ player.events.on('playerStart', async (queue, track) => {
       if (interaction.customId === 'next') {
          queue.node.skip();
          await interaction.update("Son suivant")
-         //.then(await channel.messages.fetch(lastMessageId).then(message => message.delete()));
       }
       if (interaction.customId === 'stop') {
          queue.delete();
@@ -180,6 +173,24 @@ player.events.on('playerStart', async (queue, track) => {
       if (interaction.customId === 'shuffle') {
          queue.tracks.shuffle();
          await interaction.update("Playlist mélangée");
+      }
+      if (interaction.customId === 'queue') {
+         const tracks = queue.tracks.data;
+
+         // Get the first 10 songs in the queue
+         const queueArray = tracks.slice(0, 10).map((song, i) => {
+            return `${i + 1}) [${song.duration}] ${song.title} - ${song.author} @${song.requestedBy.username}`
+         }).join("\n")
+         await interaction.update("Affiche la playlist")
+         await interaction.channel.send({
+            embeds: [
+                new EmbedBuilder()
+                    .setDescription(`**En ce moment**\n` + 
+                        (track ? `[${track.duration}] ${track.title} - @${track.requestedBy.username}` : "Aucun") + `\n\n**Playlist**\n${queueArray}`
+                    )
+                    .setThumbnail(track.thumbnail)
+            ]
+        })
       }
 
       return;

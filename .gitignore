@@ -54,6 +54,9 @@ web_modules/
 # upm directory
 .upm
 
+# utils directory
+utils/
+
 # Optional eslint cache
 .eslintcache
 
