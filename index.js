@@ -118,10 +118,11 @@ player.events.on('playerStart', async (queue, track) => {
    const row = new ActionRowBuilder()
       .addComponents(prev, playPause, next, stop, shuffle);
 
-   const lastMessageId = channel.lastMessageId;
+   //const lastMessageId = channel.lastMessageId;
+   /* var lastMessageId;
    if (lastMessageId) {
       channel.messages.fetch(lastMessageId).then(message => message.delete())
-   }
+   } */
 
    const reply = await channel.send({
       embeds: [
@@ -133,6 +134,7 @@ player.events.on('playerStart', async (queue, track) => {
       ],
       components: [row]
    });
+   var lastMessageId = reply.id;
 
    //const filter = i => i.user.id === interaction.user.id;
 
@@ -144,29 +146,29 @@ player.events.on('playerStart', async (queue, track) => {
    collector.on('collect', async (interaction) => {
       if (interaction.customId === 'prev') {
          await history.previous();
-         await interaction.update("Son précédent");
-         return;
+         await interaction.update("Son précédent")
+         .then(await channel.messages.fetch(lastMessageId).then(message => message.delete()));
       }
       if (interaction.customId === 'play-pause') {
          queue.node.setPaused(!queue.node.isPaused());
          await interaction.update(queue.node.isPaused() ? "Pause" : "Play");
-         return;
       }
       if (interaction.customId === 'next') {
          queue.node.skip();
-         await interaction.update("Son suivant");
-         return;
+         await interaction.update("Son suivant")
+         .then(await channel.messages.fetch(lastMessageId).then(message => message.delete()));
       }
       if (interaction.customId === 'stop') {
          queue.delete();
-         await interaction.update("Playlist arrêtée");
-         return;
+         await interaction.update("Playlist arrêtée")
+         .then(await channel.messages.fetch(lastMessageId).then(message => message.delete()));
       }
       if (interaction.customId === 'shuffle') {
          queue.tracks.shuffle();
          await interaction.update("Playlist mélangée");
-         return;
       }
+
+      return;
    })
 });
 
