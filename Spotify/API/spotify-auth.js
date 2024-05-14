@@ -123,30 +123,27 @@ app.get('/refresh_token', (req, res) => {
 });
 
 app.listen(PORT, () =>
-    console.log(
-        `HTTP Server up. Now go to http://localhost:${PORT}/auth/spotify in your browser.`
-    )
+   console.log(
+      `HTTP Server up. Now go to http://localhost:${PORT}/auth/spotify in your browser.`
+   )
 );
 
-// Auto refresh token
-setInterval(function () {
-   if (Math.floor(tokenExpirationEpoch - new Date().getTime() / 1000) < 11) {
-      // Refresh token and print the new time to expiration.
-      spotifyApi.refreshAccessToken().then(
-         function (data) {
-            tokenExpirationEpoch =
-               new Date().getTime() / 1000 + data.body['expires_in'];
-            console.log(
-               'Refreshed token. It now expires in ' +
-               Math.floor(tokenExpirationEpoch - new Date().getTime() / 1000) +
-               ' seconds!'
-            );
-         },
-         function (err) {
-            console.log('Could not refresh the token!', err.message);
-         }
-      );
-   }
-}, 4000);
+// Refresh token
+function refreshSpotifyToken(){
+   spotifyApi.refreshAccessToken().then(
+      function (data) {
+         tokenExpirationEpoch =
+            new Date().getTime() / 1000 + data.body['expires_in'];
+         console.log(
+            'Refreshed token. It now expires in ' +
+            Math.floor(tokenExpirationEpoch - new Date().getTime() / 1000) +
+            ' seconds!'
+         );
+      },
+      function (err) {
+         console.log('Could not refresh the token!', err.message);
+      }
+   );
+}
 
-module.exports = { spotifyApi, getPlaylist }
+module.exports = { refreshSpotifyToken, getPlaylist }

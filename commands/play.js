@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require("@discordjs/builders")
 const { EmbedBuilder, Colors, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
     ActionRowBuilder, ComponentType, ButtonBuilder, ButtonStyle } = require("discord.js")
-const { QueryType, useMainPlayer  } = require("discord-player");
+const { QueryType, useMainPlayer } = require("discord-player");
 const { getPlaylist } = require("../Spotify/API/spotify-auth");
 
 async function playUrl(interaction, url) {
@@ -14,15 +14,20 @@ async function playUrl(interaction, url) {
     //console.log(result);
     addQueue(interaction, result.tracks);
 
-    await interaction.editReply({
+    const reply = await interaction.editReply({
         embeds: [
             new EmbedBuilder()
                 .setColor(Colors.Orange)
                 .setTitle(`**Sélection Playlist**`)
                 .setThumbnail(result.playlist.thumbnail)
                 .setDescription(`${result.playlist.title} [${Object.keys(result.tracks).length} musiques ajoutées]\n Demandé par @${result.requestedBy.username}`)
-        ]
+        ],
+        fetchReply: true
     });
+    setInterval(async function () {
+        await interaction.channel.messages.fetch(reply.id).then(message => message.delete())
+        clearInterval(this);
+    }, 30000)
 }
 
 async function addQueue(interaction, track) {
@@ -187,7 +192,12 @@ module.exports = {
             const reply = await interaction.reply({
                 content: 'Fais une selection',
                 components: [actionRow],
+                fetchReply: true
             });
+            setInterval(async function () {
+                await interaction.channel.messages.fetch(reply.id).then(message => message.delete())
+                clearInterval(this);
+            }, 30000)
 
             const collector = reply.createMessageComponentCollector({
                 componentType: ComponentType.StringSelect,
@@ -195,7 +205,7 @@ module.exports = {
                 time: 60_000,
             });
 
-            collector.on('collect', (interaction) => {
+            collector.on('collect', async (interaction) => {
                 if (!interaction.values.length) {
                     interaction.reply("Aucune selection");
                     return;
@@ -205,18 +215,23 @@ module.exports = {
 
                 addQueue(interaction, result);
 
-                return interaction.reply({
+                const queueReply = await interaction.reply({
                     embeds: [
                         new EmbedBuilder()
                             .setColor(Colors.Orange)
                             .setTitle(`**Sélection**`)
                             .setThumbnail(result.thumbnail)
                             .setDescription(`${result.title} - ${result.author} [${result.duration}]\n Demandé par @${result.requestedBy.username}`)
-                    ]
+                    ],
+                    fetchReply: true
                 });
-            })
+                setInterval(async function () {
+                    await interaction.channel.messages.fetch(queueReply.id).then(message => message.delete())
+                    clearInterval(this);
+                }, 30000)
 
-            //execute(interaction);
+                return;
+            })
 
         } else if (interaction.options.getSubcommand() === "search-playlist") {
             let query = interaction.options.getString("search")
@@ -242,7 +257,13 @@ module.exports = {
             const reply = await interaction.reply({
                 content: 'Fais une sélection',
                 components: [actionRow],
+                fetchReply: true
             });
+            //const channel = client.channels.cache.get(channelID);
+            setInterval(async function () {
+                await interaction.channel.messages.fetch(reply.id).then(message => message.delete())
+                clearInterval(this);
+            }, 30000)
 
             const collector = reply.createMessageComponentCollector({
                 componentType: ComponentType.StringSelect,
@@ -261,5 +282,5 @@ module.exports = {
                 playUrl(interaction, playlistUrl)
             })
         }
-    }, 
+    },
 }
