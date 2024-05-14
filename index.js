@@ -121,14 +121,30 @@ player.events.on('playerStart', async (queue, track) => {
    if (lastMessageId) {
       await channel.messages.fetch(lastMessageId).then(message => message.delete())
    }
+
+   const embed = new EmbedBuilder()
+      .setColor(Colors.Orange)
+      .setTitle(`**📀 En train de jouer**`)
+      .setURL(track.url)
+      .setImage(track.thumbnail)
+      .addFields({
+         name: "Titre",
+         value: track.title,
+         inline: true,
+      }, {
+         name: "Auteur",
+         value: track.author,
+         inline: true,
+      }, {
+         name: "Durée",
+         value: track.duration,
+         inline: true,
+      })
+      .setFooter({ text: `Demandé par @${track.requestedBy.username}` })
+      .setTimestamp();
+
    const reply = await channel.send({
-      embeds: [
-         new EmbedBuilder()
-            .setColor(Colors.Orange)
-            .setTitle(`**En train de jouer**`)
-            .setThumbnail(track.thumbnail)
-            .setDescription(`${track.title} - ${track.author} [${track.duration}]\n Demandé par @${track.requestedBy.username}`)
-      ],
+      embeds: [embed],
       components: [row]
    });
 
@@ -145,7 +161,7 @@ player.events.on('playerStart', async (queue, track) => {
       if (interaction.customId === 'prev') {
          await history.previous();
          await interaction.update("Son précédent")
-            //.then(await channel.messages.fetch(lastMessageId).then(message => message.delete()));
+         //.then(await channel.messages.fetch(lastMessageId).then(message => message.delete()));
       }
       if (interaction.customId === 'play-pause') {
          queue.node.setPaused(!queue.node.isPaused());
@@ -154,7 +170,7 @@ player.events.on('playerStart', async (queue, track) => {
       if (interaction.customId === 'next') {
          queue.node.skip();
          await interaction.update("Son suivant")
-            //.then(await channel.messages.fetch(lastMessageId).then(message => message.delete()));
+         //.then(await channel.messages.fetch(lastMessageId).then(message => message.delete()));
       }
       if (interaction.customId === 'stop') {
          queue.delete();
