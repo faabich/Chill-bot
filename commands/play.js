@@ -5,7 +5,8 @@ const { QueryType, useMainPlayer } = require("discord-player");
 const { getPlaylist } = require("../Spotify/API/spotify-auth");
 const { response } = require("express");
 
-const TIMER = 15_000;
+const SHORT_TIMER = 15_000;
+const LONG_TIMER = 30_000;
 
 async function playUrl(interaction, url) {
     const player = useMainPlayer();
@@ -27,7 +28,7 @@ async function playUrl(interaction, url) {
         ],
         fetchReply: true
     }).then(msg => {
-        setTimeout(() => msg.delete(), TIMER);
+        setTimeout(() => msg.delete(), SHORT_TIMER);
 
     }).catch(error => {
         console.log(error);
@@ -201,7 +202,7 @@ module.exports = {
 
             setTimeout(async function () {
                 await interaction.channel.messages.fetch(reply.id).then(message => message.delete())
-            }, TIMER);
+            }, LONG_TIMER);
 
             const collector = reply.createMessageComponentCollector({
                 componentType: ComponentType.StringSelect,
@@ -229,7 +230,7 @@ module.exports = {
                     ],
                     fetchReply: true
                 }).then(msg => {
-                    setTimeout(() => msg.delete(), TIMER);
+                    setTimeout(() => msg.delete(), SHORT_TIMER);
 
                 }).catch(error => {
                     console.log(error);
@@ -267,7 +268,7 @@ module.exports = {
 
             setTimeout(async function () {
                 await interaction.channel.messages.fetch(reply.id).then(message => message.delete())
-            }, TIMER)
+            }, LONG_TIMER)
 
             const collector = reply.createMessageComponentCollector({
                 componentType: ComponentType.StringSelect,

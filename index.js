@@ -14,7 +14,7 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates, 'GuildVoiceStates']
 });
 
-const TIMER = 15_000;
+const SHORT_TIMER = 15_000;
 
 // List of all commands
 const commands = [];
@@ -213,7 +213,7 @@ player.events.on('playerStart', async (queue, track) => {
                         .setThumbnail(track.thumbnail)
                 ]
             }).then(msg => {
-                setTimeout(() => msg.delete(), TIMER);
+                setTimeout(() => msg.delete(), SHORT_TIMER);
 
             }).catch(error => {
                 console.log(error);
