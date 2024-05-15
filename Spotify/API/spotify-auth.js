@@ -132,6 +132,7 @@ app.listen(PORT, () =>
 function refreshSpotifyToken(){
    spotifyApi.refreshAccessToken().then(
       function (data) {
+         spotifyApi.setAccessToken(data.body.access_token);
          tokenExpirationEpoch =
             new Date().getTime() / 1000 + data.body['expires_in'];
          console.log(
