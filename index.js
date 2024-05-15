@@ -10,11 +10,11 @@ const fs = require('fs');
 const path = require('path');
 const { setInterval, setTimeout } = require('timers');
 
+const SHORT_TIMER = 15_000;
+
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates, 'GuildVoiceStates']
 });
-
-const SHORT_TIMER = 15_000;
 
 // List of all commands
 const commands = [];
@@ -129,13 +129,6 @@ player.events.on('playerStart', async (queue, track) => {
     const row = new ActionRowBuilder()
         .addComponents(playPause, next, stop, shuffle, queueSearch);
 
-    if (playerMessageId) {
-        try {
-            await channel.messages.fetch(playerMessageId).then(message => message.delete())
-        } catch (error) {
-
-        }
-    }
 
     const embed = new EmbedBuilder()
         .setColor(Colors.Orange)
@@ -157,6 +150,14 @@ player.events.on('playerStart', async (queue, track) => {
         })
         .setFooter({ text: `Demandé par @${track.requestedBy.username}` })
         .setTimestamp();
+
+    if (playerMessageId) {
+        try {
+            await channel.messages.fetch(playerMessageId).then(message => message.delete())
+        } catch (error) {
+
+        }
+    }
 
     const reply = await channel.send({
         embeds: [embed],
@@ -184,13 +185,27 @@ player.events.on('playerStart', async (queue, track) => {
                 await interaction.update("Son suivant")
             } else {
                 await interaction.update("Playlist vide")
-                    .then(await channel.messages.fetch(playerMessageId).then(message => message.delete()));
+                    .then(await channel.messages
+                        .fetch(playerMessageId)
+                        .then(message => message.delete()));
             }
         }
         if (interaction.customId === 'stop') {
             queue.delete();
             await interaction.update("Playlist arrêtée")
-                .then(await channel.messages.fetch(playerMessageId).then(message => message.delete()));
+                .then(await channel.messages
+                    .fetch(playerMessageId)
+                    .then(message => message
+                        .delete()
+                        .catch((err) => console.log('Could not delete the message', err))
+                    ))
+                .catch((err) => {
+                    if (err.code === 10008) {
+                        console.log('Message already deleted');
+                    } else {
+                        console.log(err);
+                    }
+                });
         }
         if (interaction.customId === 'shuffle') {
             queue.tracks.shuffle();
@@ -223,5 +238,38 @@ player.events.on('playerStart', async (queue, track) => {
         return;
     })
 });
+
+/* player.events.on('emptyQueue', async (queue) => {
+    // Emitted when the player queue has finished
+    const channel = client.channels.cache.get(channelID);
+    try {
+        console.log(`From emptyQueue: playerMessageId: ${playerMessageId} | channelID: ${channelID}`);
+        //await channel.messages.fetch(playerMessageId).then(message => console.log(message));
+
+        return await channel.messages.fetch(playerMessageId).then(message => message.delete()).then(error => console.log(error))
+    } catch (error) {
+        console.error(error);
+    }
+}); */
+
+player.events.on('disconnect', async (queue) => {
+    // Emitted when the bot leaves the voice channel
+    const channel = client.channels.cache.get(channelID);
+    setTimeout(async () => {
+        await channel.messages.fetch(playerMessageId).then((fetchedMessage) => {
+            fetchedMessage
+                .delete()
+                .catch((err) => console.log('Could not delete the message', err));
+        })
+            .catch((err) => {
+                if (err.code === 10008) {
+                    //console.log('Message already deleted');
+                } else {
+                    console.log(err);
+                }
+            });
+    }, 1000)
+});
+
 
 client.login(process.env.TOKEN);
