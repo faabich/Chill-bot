@@ -3,6 +3,9 @@ const { EmbedBuilder, Colors, StringSelectMenuBuilder, StringSelectMenuOptionBui
     ActionRowBuilder, ComponentType, ButtonBuilder, ButtonStyle } = require("discord.js")
 const { QueryType, useMainPlayer } = require("discord-player");
 const { getPlaylist } = require("../Spotify/API/spotify-auth");
+const { response } = require("express");
+
+const TIMER = 15_000;
 
 async function playUrl(interaction, url) {
     const player = useMainPlayer();
@@ -14,7 +17,7 @@ async function playUrl(interaction, url) {
     //console.log(result);
     addQueue(interaction, result.tracks);
 
-    const reply = await interaction.editReply({
+    await interaction.editReply({
         embeds: [
             new EmbedBuilder()
                 .setColor(Colors.Orange)
@@ -23,11 +26,12 @@ async function playUrl(interaction, url) {
                 .setDescription(`${result.playlist.title} [${Object.keys(result.tracks).length} musiques ajoutées]\n Demandé par @${result.requestedBy.username}`)
         ],
         fetchReply: true
+    }).then(msg => {
+        setTimeout(() => msg.delete(), TIMER);
+
+    }).catch(error => {
+        console.log(error);
     });
-    setInterval(async function () {
-        await interaction.channel.messages.fetch(reply.id).then(message => message.delete())
-        clearInterval(this);
-    }, 30000)
 }
 
 async function addQueue(interaction, track) {
@@ -194,10 +198,10 @@ module.exports = {
                 components: [actionRow],
                 fetchReply: true
             });
-            setInterval(async function () {
+
+            setTimeout(async function () {
                 await interaction.channel.messages.fetch(reply.id).then(message => message.delete())
-                clearInterval(this);
-            }, 30000)
+            }, TIMER);
 
             const collector = reply.createMessageComponentCollector({
                 componentType: ComponentType.StringSelect,
@@ -215,7 +219,7 @@ module.exports = {
 
                 addQueue(interaction, result);
 
-                const queueReply = await interaction.reply({
+                await interaction.reply({
                     embeds: [
                         new EmbedBuilder()
                             .setColor(Colors.Orange)
@@ -224,11 +228,12 @@ module.exports = {
                             .setDescription(`${result.title} - ${result.author} [${result.duration}]\n Demandé par @${result.requestedBy.username}`)
                     ],
                     fetchReply: true
+                }).then(msg => {
+                    setTimeout(() => msg.delete(), TIMER);
+
+                }).catch(error => {
+                    console.log(error);
                 });
-                setInterval(async function () {
-                    await interaction.channel.messages.fetch(queueReply.id).then(message => message.delete())
-                    clearInterval(this);
-                }, 30000)
 
                 return;
             })
@@ -259,11 +264,10 @@ module.exports = {
                 components: [actionRow],
                 fetchReply: true
             });
-            //const channel = client.channels.cache.get(channelID);
-            setInterval(async function () {
+
+            setTimeout(async function () {
                 await interaction.channel.messages.fetch(reply.id).then(message => message.delete())
-                clearInterval(this);
-            }, 30000)
+            }, TIMER)
 
             const collector = reply.createMessageComponentCollector({
                 componentType: ComponentType.StringSelect,

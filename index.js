@@ -8,11 +8,13 @@ const { refreshSpotifyToken } = require('./Spotify/API/spotify-auth')
 
 const fs = require('fs');
 const path = require('path');
-const { setInterval } = require('timers');
+const { setInterval, setTimeout } = require('timers');
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates, 'GuildVoiceStates']
 });
+
+const TIMER = 15_000;
 
 // List of all commands
 const commands = [];
@@ -37,7 +39,7 @@ client.player = new Player(client, {
         liveBuffer: 1 << 62,
         dlChunkSize: 0, //disabling chunking is recommended in discord bot
         bitrate: 128,
-        quality: "highestaudio"
+        quality: "lowestaudio"
     }
 })
 
@@ -88,7 +90,7 @@ const player = new Player(client);
 
 player.extractors.loadDefault();
 
-var lastMessageId;
+var playerMessageId;
 // this event is emitted whenever discord-player starts to play a track
 player.events.on('playerStart', async (queue, track) => {
     // we will later define queue.metadata object while creating the queue
@@ -127,9 +129,9 @@ player.events.on('playerStart', async (queue, track) => {
     const row = new ActionRowBuilder()
         .addComponents(playPause, next, stop, shuffle, queueSearch);
 
-    if (lastMessageId) {
+    if (playerMessageId) {
         try {
-            await channel.messages.fetch(lastMessageId).then(message => message.delete())
+            await channel.messages.fetch(playerMessageId).then(message => message.delete())
         } catch (error) {
 
         }
@@ -162,7 +164,7 @@ player.events.on('playerStart', async (queue, track) => {
         fetchReply: true
     });
 
-    lastMessageId = reply.id;
+    playerMessageId = reply.id;
 
     //const filter = i => i.user.id === interaction.user.id;
 
@@ -178,12 +180,17 @@ player.events.on('playerStart', async (queue, track) => {
         }
         if (interaction.customId === 'next') {
             queue.node.skip();
-            await interaction.update("Son suivant")
+            if (!queue.isEmpty()) {
+                await interaction.update("Son suivant")
+            } else {
+                await interaction.update("Playlist vide")
+                    .then(await channel.messages.fetch(playerMessageId).then(message => message.delete()));
+            }
         }
         if (interaction.customId === 'stop') {
             queue.delete();
             await interaction.update("Playlist arrêtée")
-                .then(await channel.messages.fetch(lastMessageId).then(message => message.delete()));
+                .then(await channel.messages.fetch(playerMessageId).then(message => message.delete()));
         }
         if (interaction.customId === 'shuffle') {
             queue.tracks.shuffle();
@@ -197,7 +204,7 @@ player.events.on('playerStart', async (queue, track) => {
                 return `${i + 1}) [${song.duration}] ${song.title} - ${song.author} @${song.requestedBy.username}`
             }).join("\n")
             await interaction.update("Affiche la playlist")
-            var queueReply = await interaction.channel.send({
+            await interaction.channel.send({
                 embeds: [
                     new EmbedBuilder()
                         .setDescription(`**En ce moment**\n` +
@@ -205,26 +212,16 @@ player.events.on('playerStart', async (queue, track) => {
                         )
                         .setThumbnail(track.thumbnail)
                 ]
-            })
-            setInterval(async function () {
-                await channel.messages.fetch(queueReply.id).then(message => message.delete())
-                clearInterval(this);
-            }, 30000)
+            }).then(msg => {
+                setTimeout(() => msg.delete(), TIMER);
+
+            }).catch(error => {
+                console.log(error);
+            });
         }
 
         return;
     })
 });
-
-player.events.on('disconnect', async (queue) => {
-    // Emitted when the bot leaves the voice channel
-    const channel = client.channels.cache.get(channelID);
-    try {
-        await channel.messages.fetch(lastMessageId).then(message => message.delete())
-    } catch (error) {
-        console.error(error);
-    }
-});
-
 
 client.login(process.env.TOKEN);
