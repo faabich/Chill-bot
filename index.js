@@ -239,19 +239,6 @@ player.events.on('playerStart', async (queue, track) => {
     })
 });
 
-/* player.events.on('emptyQueue', async (queue) => {
-    // Emitted when the player queue has finished
-    const channel = client.channels.cache.get(channelID);
-    try {
-        console.log(`From emptyQueue: playerMessageId: ${playerMessageId} | channelID: ${channelID}`);
-        //await channel.messages.fetch(playerMessageId).then(message => console.log(message));
-
-        return await channel.messages.fetch(playerMessageId).then(message => message.delete()).then(error => console.log(error))
-    } catch (error) {
-        console.error(error);
-    }
-}); */
-
 player.events.on('disconnect', async (queue) => {
     // Emitted when the bot leaves the voice channel
     const channel = client.channels.cache.get(channelID);

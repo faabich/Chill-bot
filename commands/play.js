@@ -108,7 +108,15 @@ module.exports = {
         ),
     execute: async ({ client, interaction }) => {
         // Make sure the user is inside a voice channel
-        if (!interaction.member.voice.channel) return interaction.reply("Tu dois être dans un chat vocal pour mettre du bon son");
+        if (!interaction.member.voice.channel) {
+            return interaction.reply("Tu dois être dans un chat vocal pour mettre du bon son")
+                .then(msg => {
+                    setTimeout(() => msg.delete(), SHORT_TIMER);
+
+                }).catch(error => {
+                    console.log(error);
+                });
+        };
 
         // Create a play queue for the server
         const queue = await client.player.nodes.create(interaction.guild);
@@ -217,6 +225,8 @@ module.exports = {
                 }
 
                 const result = results.tracks.slice(0, 10).find(track => track.url == interaction.values);
+                
+                console.log(`${interaction.user.username} cherche musique: ${result.title}, recherche: ${query}`);
 
                 addQueue(interaction, result);
 
@@ -283,6 +293,9 @@ module.exports = {
                 }
 
                 const playlistFound = playlistData.slice(0, 20).find(playlist => playlist.external_urls.spotify == interaction.values);
+
+                console.log(`${interaction.user.username} cherche playlist: ${playlistFound.name}, recherche: ${query}`);
+
                 playlistUrl = playlistFound.external_urls.spotify;
                 playUrl(interaction, playlistUrl)
             })
