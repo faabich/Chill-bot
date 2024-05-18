@@ -180,10 +180,10 @@ player.events.on('playerStart', async (queue, track) => {
             await interaction.update(queue.node.isPaused() ? "Pause" : "Play");
         }
         if (interaction.customId === 'next') {
-            queue.node.skip();
-            if (!queue.isEmpty()) {
-                await interaction.update("Son suivant")
-            } else {
+            if (!queue.isEmpty() & queue.isPlaying()) {
+                queue.node.skip();
+                await interaction.update("Son suivant");
+            } else if (queue.isEmpty()) {
                 await interaction.update("Playlist vide")
                     .then(await channel.messages
                         .fetch(playerMessageId)

@@ -226,7 +226,7 @@ module.exports = {
 
                 const result = results.tracks.slice(0, 10).find(track => track.url == interaction.values);
                 
-                console.log(`${interaction.user.username} cherche musique: ${result.title}, recherche: ${query}`);
+                console.log(`${interaction.user.username} joue musique: ${result.title}, recherche: ${query}`);
 
                 addQueue(interaction, result);
 
@@ -294,7 +294,7 @@ module.exports = {
 
                 const playlistFound = playlistData.slice(0, 20).find(playlist => playlist.external_urls.spotify == interaction.values);
 
-                console.log(`${interaction.user.username} cherche playlist: ${playlistFound.name}, recherche: ${query}`);
+                console.log(`${interaction.user.username} joue playlist: ${playlistFound.name}, recherche: ${query}`);
 
                 playlistUrl = playlistFound.external_urls.spotify;
                 playUrl(interaction, playlistUrl)

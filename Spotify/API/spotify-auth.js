@@ -135,11 +135,11 @@ function refreshSpotifyToken(){
          spotifyApi.setAccessToken(data.body.access_token);
          tokenExpirationEpoch =
             new Date().getTime() / 1000 + data.body['expires_in'];
-         console.log(
+         /* console.log(
             'Refreshed token. It now expires in ' +
             Math.floor(tokenExpirationEpoch - new Date().getTime() / 1000) +
             ' seconds!'
-         );
+         ); */
       },
       function (err) {
          console.log('Could not refresh the token!', err.message);
