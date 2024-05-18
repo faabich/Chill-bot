@@ -8,17 +8,16 @@ module.exports = {
         .setDescription("affiche les sons de la playlist"),
 
     execute: async ({ interaction }) => {
-      const queue = useQueue(interaction.guild.id);
+        const queue = useQueue(interaction.guild.id);
 
         // check if there are songs in the queue
-        if (!queue)
-        {
+        if (!queue) {
             await interaction.reply("Pas de son dans la playlist");
             return;
         }
 
         const tracks = queue.tracks.data;
-       
+
         // Get the first 10 songs in the queue
         const queueArray = tracks.slice(0, 10).map((song, i) => {
             return `${i + 1}) [${song.duration}] ${song.title} - ${song.author} @${song.requestedBy.username}`
@@ -30,7 +29,7 @@ module.exports = {
         await interaction.reply({
             embeds: [
                 new EmbedBuilder()
-                    .setDescription(`**En ce moment**\n` + 
+                    .setDescription(`**En ce moment**\n` +
                         (currentSong ? `[${currentSong.duration}] ${currentSong.title} - @${currentSong.requestedBy.username}` : "Aucun") + `\n\n**Playlist**\n${queueArray}`
                     )
                     .setThumbnail(currentSong.setThumbnail)

@@ -3,7 +3,6 @@ const { EmbedBuilder, Colors, StringSelectMenuBuilder, StringSelectMenuOptionBui
     ActionRowBuilder, ComponentType, ButtonBuilder, ButtonStyle } = require("discord.js")
 const { QueryType, useMainPlayer } = require("discord-player");
 const { getPlaylist } = require("../Spotify/API/spotify-auth");
-const { response } = require("express");
 
 const SHORT_TIMER = 15_000;
 const LONG_TIMER = 30_000;
@@ -11,11 +10,10 @@ const LONG_TIMER = 30_000;
 async function playUrl(interaction, url) {
     const player = useMainPlayer();
     await interaction.deferReply();
-    //const result = new SearchResult(player, _data)
     const result = await player.search(url, {
         requestedBy: interaction.user
     })
-    //console.log(result);
+
     addQueue(interaction, result.tracks);
 
     await interaction.editReply({
@@ -59,7 +57,6 @@ async function addQueue(interaction, track) {
     await entry.getTask();
 
     // add track(s) (this will add playlist or single track from the result)
-    //console.log(track)
     queue.addTrack(track);
 
     try {
