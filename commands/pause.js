@@ -5,12 +5,12 @@ const { useQueue } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("pause-play")
-        .setDescription("Pause/play le bon son"),
+        .setDescription("Pause/play a good song"),
     execute: async ({ interaction }) => {
         // Get the queue for the server
         const queue = useQueue(interaction.guild.id);
         if (!queue) {
-            await interaction.reply("Pas de son dans la liste")
+            await interaction.reply("Empty playlist")
             return;
         }
 

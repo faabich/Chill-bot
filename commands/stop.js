@@ -4,7 +4,7 @@ const { useQueue } = require("discord-player");
 module.exports = {
   data: new SlashCommandBuilder()
         .setName("stop")
-        .setDescription("Dégage le bot musique"),
+        .setDescription("Stop the music player"),
   execute: async ({ interaction }) => {
 
         // Get the current queue
@@ -12,13 +12,13 @@ module.exports = {
     
     if (!queue)
     {
-      await interaction.reply("There are no songs in the queue")
+      await interaction.reply("Empty playlist")
       return;
     }
 
         // Deletes all the songs from the queue and exits the channel
     queue.delete();
 
-        await interaction.reply("C'était du bon son sérieux...")
+        await interaction.reply("It was a good song...");
   },
 }

@@ -5,7 +5,7 @@ const { useQueue } = require("discord-player");
 module.exports = {
   data: new SlashCommandBuilder()
         .setName("skip")
-        .setDescription("Skip le son"),
+        .setDescription("Skip a song"),
 
   execute: async ({ interaction }) => {
 
@@ -13,17 +13,17 @@ module.exports = {
     const queue = useQueue(interaction.guild.id);
 
         // If there is no queue, return
-    if (!queue) return await interaction.reply("Pas de son dans la liste");
+    if (!queue) return await interaction.reply("Empty playlist");
         
     queue.node.skip()
         
-    if (!queue) return await interaction.reply("Plus de son dans la liste");
+    if (!queue) return await interaction.reply("Empty playlist");
 
         // Return an embed to the user saying the song has been skipped
         await interaction.reply({
             embeds: [
                 new EmbedBuilder()
-                    .setDescription(`${queue.currentTrack.title} skippé!`)
+                    .setDescription(`${queue.currentTrack.title} skipped!`)
                     .setThumbnail(queue.currentTrack.thumbnail)
             ]
         })

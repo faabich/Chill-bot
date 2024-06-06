@@ -2,7 +2,8 @@ require('dotenv').config();
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { Colors, Client, GatewayIntentBits, Collection, ActionRowBuilder,
-    ComponentType, ButtonBuilder, ButtonStyle, EmbedBuilder, ActivityType } = require('discord.js');
+    ComponentType, ButtonBuilder, ButtonStyle, EmbedBuilder, ActivityType,
+    User } = require('discord.js');
 const { Player } = require("discord-player");
 const { refreshSpotifyToken } = require('./Spotify/API/spotify-auth')
 
@@ -16,19 +17,38 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates, 'GuildVoiceStates']
 });
 
-// List of all commands
-const commands = [];
-client.commands = new Collection();
+// // List of all commands
+// const commands = [];
+// client.commands = new Collection();
 
-const commandsPath = path.join(__dirname, "commands"); // E:\yt\discord bot\js\intro\commands
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file);
-    const command = require(filePath);
+// const commandsPath = path.join(__dirname, "commands"); // E:\yt\discord bot\js\intro\commands
+// const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+// for (const file of commandFiles) {
+//     const filePath = path.join(commandsPath, file);
+//     const command = require(filePath);
 
-    client.commands.set(command.data.name, command);
-    commands.push(command.data.toJSON());
-}
+//     client.commands.set(command.data.name, command);
+//     commands.push(command.data.toJSON());
+// }
+
+// // Construct and prepare an instance of the REST module
+// const rest = new REST().setToken(process.env.TOKEN);
+
+// // and deploy your commands!
+// (async () => {
+// 	try {
+// 		// The put method is used to fully refresh all commands in the guild with the current set
+// 		const data = await rest.put(
+//             Routes.applicationCommands(process.env.CLIENT_ID),
+//             { body: commands },
+//         );
+
+// 		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+// 	} catch (error) {
+// 		// And of course, make sure you catch and log any errors!
+// 		console.error(error);
+// 	}
+// })();
 
 // Add the player on the client
 client.player = new Player(client, {
@@ -46,17 +66,12 @@ client.player = new Player(client, {
 client.on("ready", function (readyClient) {
     // Get all ids of the servers
     const guild_ids = client.guilds.cache.map(guild => guild.id);
-
-    const rest = new REST({ version: '9' }).setToken(process.env.TOKEN);
     for (const guildId of guild_ids) {
-        rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId),
-            { body: commands })
-            .then(() => console.log('Successfully updated commands for guild ' + guildId))
-            .catch(console.error);
+        console.log('Successfully logged in guild ' + guildId);
     }
 
     client.user.setActivity({
-        name: 'les étoiles...',
+        name: 'stars...',
         type: ActivityType.Watching
     })
 
@@ -121,18 +136,29 @@ player.events.on('playerStart', async (queue, track) => {
         .setEmoji('🔍')
         .setStyle(ButtonStyle.Secondary);
 
+
+    //////////////////////////////////////
+    const volume = new ButtonBuilder()
+        .setCustomId('volume')
+        .setEmoji('🔊')
+        .setStyle(ButtonStyle.Secondary);
+
+
     const link = new ButtonBuilder()
-        .setEmoji('🌐')
+        .setLabel('Lien')
         .setURL(track.url)
         .setStyle(ButtonStyle.Link);
 
-    const row = new ActionRowBuilder()
+    const row1 = new ActionRowBuilder()
         .addComponents(playPause, next, stop, shuffle, queueSearch);
+
+    const row2 = new ActionRowBuilder()
+        .addComponents(volume, link);
 
 
     const embed = new EmbedBuilder()
         .setColor(Colors.Orange)
-        .setTitle(`**📀 En train de jouer**`)
+        .setTitle(`**📀 Playing**`)
         .setURL(track.url)
         .setImage(track.thumbnail)
         .addFields({
@@ -148,7 +174,7 @@ player.events.on('playerStart', async (queue, track) => {
             value: track.duration,
             inline: true,
         })
-        .setFooter({ text: `Demandé par @${track.requestedBy.username}` })
+        .setFooter({ text: `Asked by @${track.requestedBy.username}` })
         .setTimestamp();
 
     if (playerMessageId) {
@@ -161,7 +187,12 @@ player.events.on('playerStart', async (queue, track) => {
 
     const reply = await channel.send({
         embeds: [embed],
-        components: [row],
+        components: [{
+            components: [playPause, next, stop, shuffle, queueSearch],
+        },
+        /* {
+            components: [volume, link]
+        } */],
         fetchReply: true
     });
 
@@ -182,9 +213,9 @@ player.events.on('playerStart', async (queue, track) => {
         if (interaction.customId === 'next') {
             if (!queue.isEmpty() & queue.isPlaying()) {
                 queue.node.skip();
-                await interaction.update("Son suivant");
+                await interaction.update("Next song");
             } else if (queue.isEmpty()) {
-                await interaction.update("Playlist vide")
+                await interaction.update("Empty playlist")
                     .then(await channel.messages
                         .fetch(playerMessageId)
                         .then(message => message.delete()));
@@ -192,7 +223,7 @@ player.events.on('playerStart', async (queue, track) => {
         }
         if (interaction.customId === 'stop') {
             queue.delete();
-            await interaction.update("Playlist arrêtée")
+            await interaction.update("Playlist stopped")
                 .then(await channel.messages
                     .fetch(playerMessageId)
                     .then(message => message
@@ -209,7 +240,7 @@ player.events.on('playerStart', async (queue, track) => {
         }
         if (interaction.customId === 'shuffle') {
             queue.tracks.shuffle();
-            await interaction.update("Playlist mélangée");
+            await interaction.update("Playlist shuffled");
         }
         if (interaction.customId === 'queue') {
             const tracks = queue.tracks.data;
@@ -218,12 +249,12 @@ player.events.on('playerStart', async (queue, track) => {
             const queueArray = tracks.slice(0, 10).map((song, i) => {
                 return `${i + 1}) [${song.duration}] ${song.title} - ${song.author} @${song.requestedBy.username}`
             }).join("\n")
-            await interaction.update("Affiche la playlist")
+            await interaction.update("Showing playlist")
             await interaction.channel.send({
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription(`**En ce moment**\n` +
-                            (track ? `[${track.duration}] ${track.title} - @${track.requestedBy.username}` : "Aucun") + `\n\n**Playlist**\n${queueArray || "Pas d'autres sons..."}`
+                        .setDescription(`**Currently**\n` +
+                            (track ? `[${track.duration}] ${track.title} - @${track.requestedBy.username}` : "Aucun") + `\n\n**Playlist**\n${queueArray || "No other songs..."}`
                         )
                         .setThumbnail(track.thumbnail)
                 ]
@@ -233,6 +264,25 @@ player.events.on('playerStart', async (queue, track) => {
             }).catch(error => {
                 console.log(error);
             });
+        }
+        if (interaction.customId === 'volume') {
+            const command = interaction.client.commands.get('volume');
+
+            if (!command) {
+                console.error(`No command matching ${interaction.commandName} was found.`);
+                return;
+            }
+
+            try {
+                await command.execute(interaction);
+            } catch (error) {
+                console.error(error);
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+                } else {
+                    await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                }
+            }
         }
 
         return;
@@ -257,6 +307,25 @@ player.events.on('disconnect', async (queue) => {
             });
     }, 1000)
 });
+
+/* bot.on('voiceStateUpdate', async (oldState, newState) => {
+  let newUserChannel = newState.channel;
+  let oldUserChannel = oldState.channel;
+  if (oldUserChannel === null && newUserChannel !== null) {
+      // User Join a voice channel
+      // Handle your save when user join in memcache, database , ...
+    } else if (oldUserChannel !== null && newUserChannel === null) {
+      // User Leave a voice channel
+      // Calculate with previous save time to get in voice time
+    } else if (
+      oldUserChannel !== null &&
+      newUserChannel !== null &&
+      oldUserChannel.id != newUserChannel.id
+    ) {
+      // User Switch a voice channel
+      // This is bonus if you want to do something futhermore
+   }
+}); */
 
 
 client.login(process.env.TOKEN);

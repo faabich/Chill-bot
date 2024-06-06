@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require("@discordjs/builders")
 const { EmbedBuilder, Colors, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
-    ActionRowBuilder, ComponentType, ButtonBuilder, ButtonStyle } = require("discord.js")
+    ActionRowBuilder, ComponentType } = require("discord.js")
 const { QueryType, useMainPlayer } = require("discord-player");
 const { getPlaylist } = require("../Spotify/API/spotify-auth");
 
@@ -20,9 +20,9 @@ async function playUrl(interaction, url) {
         embeds: [
             new EmbedBuilder()
                 .setColor(Colors.Orange)
-                .setTitle(`**Sélection Playlist**`)
+                .setTitle(`**Playlist selected**`)
                 .setThumbnail(result.playlist.thumbnail)
-                .setDescription(`${result.playlist.title} [${Object.keys(result.tracks).length} musiques ajoutées]\n Demandé par @${result.requestedBy.username}`)
+                .setDescription(`${result.playlist.title} [${Object.keys(result.tracks).length} added tracks]\n Asked by @${result.requestedBy.username}`)
         ],
         fetchReply: true
     }).then(msg => {
@@ -45,7 +45,6 @@ async function addQueue(interaction, track) {
             leaveOnEndCooldown: 15000, //Cooldown in ms
             leaveOnEmpty: true, //If the player should leave when the voice channel is empty
             leaveOnEmptyCooldown: 300000, //Cooldown in ms
-            volume: 25,
             skipOnNoStream: true,
         },
     });
@@ -78,35 +77,35 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName("search-song")
-                .setDescription("Recherche un son et le joue [+ajoute à la liste]")
+                .setDescription("Search Spotify song")
                 .addStringOption(option =>
-                    option.setName("search").setDescription("mots-clés").setRequired(true)
+                    option.setName("search").setDescription("keywords").setRequired(true)
                 )
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName("search-playlist")
-                .setDescription("Recherche une playlist et le joue [+ajoute à la liste]")
+                .setDescription("Search Spotify playlist")
                 .addStringOption(option =>
-                    option.setName("search").setDescription("mots-clés").setRequired(true)
+                    option.setName("search").setDescription("keywords").setRequired(true)
                 )
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName("playlist")
-                .setDescription("Joues une playlist de Youtube")
-                .addStringOption(option => option.setName("url").setDescription("Lien de la playlist").setRequired(true))
+                .setDescription("Play Youtube playlist from url")
+                .addStringOption(option => option.setName("url").setDescription("Playlist link").setRequired(true))
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName("song")
-                .setDescription("Joue une musique de Youtube")
-                .addStringOption(option => option.setName("url").setDescription("Lien du son").setRequired(true))
+                .setDescription("Play Youtube song from url")
+                .addStringOption(option => option.setName("url").setDescription("Song link").setRequired(true))
         ),
     execute: async ({ client, interaction }) => {
         // Make sure the user is inside a voice channel
         if (!interaction.member.voice.channel) {
-            return interaction.reply("Tu dois être dans un chat vocal pour mettre du bon son")
+            return interaction.reply("You must be in a vocal chat to play music!")
                 .then(msg => {
                     setTimeout(() => msg.delete(), SHORT_TIMER);
 
@@ -120,8 +119,6 @@ module.exports = {
 
         // Wait until you are connected to the channel
         if (!queue.connection) await queue.connect(interaction.member.voice.channel)
-
-        let embed = new EmbedBuilder()
 
         if (interaction.options.getSubcommand() === "song") {
             let url = interaction.options.getString("url")
@@ -143,9 +140,9 @@ module.exports = {
                 embeds: [
                     new EmbedBuilder()
                         .setColor(Colors.Orange)
-                        .setTitle(`**Sélection**`)
+                        .setTitle(`**Selection**`)
                         .setThumbnail(result.thumbnail)
-                        .setDescription(`**[${song.title}](${song.url})** ajouté à la playlist\n Demandé par @${result.requestedBy.username}`)
+                        .setDescription(`**[${song.title}](${song.url})** added to playlist\n Asked by @${result.requestedBy.username}`)
                 ]
             });
         }
@@ -168,24 +165,24 @@ module.exports = {
                 embeds: [
                     new EmbedBuilder()
                         .setColor(Colors.Orange)
-                        .setTitle(`**Sélection**`)
+                        .setTitle(`**Selection**`)
                         .setThumbnail(result.thumbnail)
-                        .setDescription(`**${result.tracks.length} sons de [${playlist.title}](${playlist.url})** ajoutés\n Demandé par @${result.requestedBy.username}`)
+                        .setDescription(`**${result.tracks.length} songs from [${playlist.title}](${playlist.url})** added\n Asked by @${result.requestedBy.username}`)
                 ]
             });
         }
         else if (interaction.options.getSubcommand() === "search-song") {
             const player = useMainPlayer();
-            let query = interaction.options.getString("search")
+            let query = interaction.options.getString("search");
             const results = await player.search(query, {
                 requestedBy: interaction.user,
                 searchEngine: QueryType.SPOTIFY_SEARCH
             })
-            if (!results) return await interaction.reply("Pas trouvé de son");
+            if (!results) return await interaction.reply("No songs found");
 
             const select = new StringSelectMenuBuilder()
                 .setCustomId('select')
-                .setPlaceholder('Choisis ton son')
+                .setPlaceholder('Choose your song')
                 .setMinValues(1)
                 .setMaxValues(1)
                 .addOptions(
@@ -200,7 +197,7 @@ module.exports = {
             const actionRow = new ActionRowBuilder().addComponents(select);
 
             const reply = await interaction.reply({
-                content: 'Fais une selection',
+                content: 'Make a selection',
                 components: [actionRow],
                 fetchReply: true
             });
@@ -217,23 +214,21 @@ module.exports = {
 
             collector.on('collect', async (interaction) => {
                 if (!interaction.values.length) {
-                    interaction.reply("Aucune selection");
+                    interaction.reply("Nothing selected");
                     return;
                 }
 
                 const result = results.tracks.slice(0, 10).find(track => track.url == interaction.values);
-                
-                console.log(`${interaction.user.username} joue musique: ${result.title}, recherche: ${query}`);
 
-                addQueue(interaction, result);
+                console.log(`${interaction.user.username} joue musique: ${result.title}, recherche: ${query}`);
 
                 await interaction.reply({
                     embeds: [
                         new EmbedBuilder()
                             .setColor(Colors.Orange)
-                            .setTitle(`**Sélection**`)
+                            .setTitle(`**Selection**`)
                             .setThumbnail(result.thumbnail)
-                            .setDescription(`${result.title} - ${result.author} [${result.duration}]\n Demandé par @${result.requestedBy.username}`)
+                            .setDescription(`${result.title} - ${result.author} [${result.duration}]\n Asked by @${result.requestedBy.username}`)
                     ],
                     fetchReply: true
                 }).then(msg => {
@@ -243,24 +238,26 @@ module.exports = {
                     console.log(error);
                 });
 
+                addQueue(interaction, result);
+
                 return;
             })
 
         } else if (interaction.options.getSubcommand() === "search-playlist") {
             let query = interaction.options.getString("search")
             const playlistData = await getPlaylist(query);
-            if (!playlistData) return await interaction.reply("Pas trouvé de playlist");
+            if (!playlistData) return await interaction.reply("No playlist found");
 
             const select = new StringSelectMenuBuilder()
                 .setCustomId('select')
-                .setPlaceholder('Choisis ta playlist')
+                .setPlaceholder('Choose your playlist')
                 .setMinValues(1)
                 .setMaxValues(1)
                 .addOptions(
                     playlistData.slice(0, 20).flatMap((playlist, i) =>
                         new StringSelectMenuOptionBuilder()
                             .setLabel(`[${playlist.tracks.total}] ${playlist.name.slice(0, 70)}`)
-                            .setDescription(playlist.description.slice(0, 100) || 'Pas de description')
+                            .setDescription(playlist.description.slice(0, 100) || 'No description')
                             .setValue(playlist.external_urls.spotify)
                     )
                 )
@@ -268,7 +265,7 @@ module.exports = {
             const actionRow = new ActionRowBuilder().addComponents(select);
 
             const reply = await interaction.reply({
-                content: 'Fais une sélection',
+                content: 'Make a selection',
                 components: [actionRow],
                 fetchReply: true
             });
@@ -285,7 +282,7 @@ module.exports = {
 
             collector.on('collect', (interaction) => {
                 if (!interaction.values.length) {
-                    interaction.reply("Aucune selection");
+                    interaction.reply("Nothing selected");
                     return;
                 }
 

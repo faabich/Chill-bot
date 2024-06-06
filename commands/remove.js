@@ -4,7 +4,7 @@ const { useQueue } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("remove")
-        .setDescription("Supprime un son de la playlist")
+        .setDescription("Remove a song from playlist")
         .addStringOption(option =>
             option.setName("number").setDescription("N°(queue)").setRequired(true)
         ),
@@ -14,13 +14,13 @@ module.exports = {
         const queue = useQueue(interaction.guild.id);
 
         if (!queue) {
-            await interaction.reply("Pas de son dans la playlist")
+            await interaction.reply("Empty playlist")
             return;
         }
 
         // Deletes all the songs from the queue and exits the channel
         queue.removeTrack(number - 1);
 
-        await interaction.reply("Son retiré !")
+        await interaction.reply("Song removed!")
     },
 }

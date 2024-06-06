@@ -5,14 +5,14 @@ const { useQueue } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("queue")
-        .setDescription("affiche les sons de la playlist"),
+        .setDescription("show playlist queue"),
 
     execute: async ({ interaction }) => {
         const queue = useQueue(interaction.guild.id);
 
         // check if there are songs in the queue
         if (!queue) {
-            await interaction.reply("Pas de son dans la playlist");
+            await interaction.reply("Empty playlist");
             return;
         }
 
@@ -29,8 +29,8 @@ module.exports = {
         await interaction.reply({
             embeds: [
                 new EmbedBuilder()
-                    .setDescription(`**En ce moment**\n` +
-                        (currentSong ? `[${currentSong.duration}] ${currentSong.title} - @${currentSong.requestedBy.username}` : "Aucun") + `\n\n**Playlist**\n${queueArray}`
+                    .setDescription(`**Currently**\n` +
+                        (currentSong ? `[${currentSong.duration}] ${currentSong.title} - @${currentSong.requestedBy.username}` : "None") + `\n\n**Playlist**\n${queueArray || "No other songs..."}`
                     )
                     .setThumbnail(currentSong.setThumbnail)
             ]
