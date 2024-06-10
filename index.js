@@ -162,19 +162,19 @@ player.events.on('playerStart', async (queue, track) => {
         .setURL(track.url)
         .setImage(track.thumbnail)
         .addFields({
-            name: "Titre",
+            name: "Title",
             value: track.title,
             inline: true,
         }, {
-            name: "Auteur",
+            name: "Author",
             value: track.author,
             inline: true,
         }, {
-            name: "Durée",
+            name: "Length",
             value: track.duration,
             inline: true,
         })
-        .setFooter({ text: `Asked by @${track.requestedBy.username}` })
+        .setFooter({ text: `Requested by @${track.requestedBy.username}` })
         .setTimestamp();
 
     if (playerMessageId) {
@@ -213,7 +213,7 @@ player.events.on('playerStart', async (queue, track) => {
         if (interaction.customId === 'next') {
             if (!queue.isEmpty() & queue.isPlaying()) {
                 queue.node.skip();
-                await interaction.update("Next song");
+                await interaction.update(`Song skipped by @${interaction.user.username}`);
             } else if (queue.isEmpty()) {
                 await interaction.update("Empty playlist")
                     .then(await channel.messages
@@ -253,8 +253,8 @@ player.events.on('playerStart', async (queue, track) => {
             await interaction.channel.send({
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription(`**Currently**\n` +
-                            (track ? `[${track.duration}] ${track.title} - @${track.requestedBy.username}` : "Aucun") + `\n\n**Playlist**\n${queueArray || "No other songs..."}`
+                        .setDescription(`**Currently playing**\n` +
+                            (track ? `[${track.duration}] ${track.title} - @${track.requestedBy.username}` : "Aucun") + `\n\n**Playlist [${tracks.length} tracks]**\n${queueArray || "No other songs..."}`
                         )
                         .setThumbnail(track.thumbnail)
                 ]

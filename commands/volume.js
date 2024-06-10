@@ -15,11 +15,6 @@ module.exports = {
         // Get the current queue
         const queue = useQueue(interaction.guild.id);
 
-        if (!queue) {
-            await interaction.reply("No songs in playlist...")
-            return;
-        }
-
         queue.node.setVolume(parseInt(volume)); //Pass the value for the volume here
 
         await interaction.reply(`Volume changed to ${volume}`)

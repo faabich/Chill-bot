@@ -1,11 +1,13 @@
 const { SlashCommandBuilder } = require("@discordjs/builders")
 const { EmbedBuilder, Colors, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
     ActionRowBuilder, ComponentType } = require("discord.js")
-const { QueryType, useMainPlayer } = require("discord-player");
+const { QueryType, useQueue, useMainPlayer } = require("discord-player");
 const { getPlaylist } = require("../Spotify/API/spotify-auth");
 
 const SHORT_TIMER = 15_000;
 const LONG_TIMER = 30_000;
+
+var songUnique = false;
 
 async function playUrl(interaction, url) {
     const player = useMainPlayer();
@@ -22,7 +24,7 @@ async function playUrl(interaction, url) {
                 .setColor(Colors.Orange)
                 .setTitle(`**Playlist selected**`)
                 .setThumbnail(result.playlist.thumbnail)
-                .setDescription(`${result.playlist.title} [${Object.keys(result.tracks).length} added tracks]\n Asked by @${result.requestedBy.username}`)
+                .setDescription(`${result.playlist.title} [${Object.keys(result.tracks).length} tracks added]\n Requested by @${result.requestedBy.username}`)
         ],
         fetchReply: true
     }).then(msg => {
@@ -55,8 +57,12 @@ async function addQueue(interaction, track) {
     // wait for previous task to be released and our task to be resolved
     await entry.getTask();
 
-    // add track(s) (this will add playlist or single track from the result)
-    queue.addTrack(track);
+    if (songUnique === true) {
+        queue.insertTrack(track, 0);
+    } else {
+        // add track(s) (this will add playlist or single track from the result)
+        queue.addTrack(track);
+    }
 
     try {
         // if player node was not previously playing, play a song
@@ -121,6 +127,7 @@ module.exports = {
         if (!queue.connection) await queue.connect(interaction.member.voice.channel)
 
         if (interaction.options.getSubcommand() === "song") {
+            songUnique = true;
             let url = interaction.options.getString("url")
 
             // Search for the song using the discord-player
@@ -142,11 +149,17 @@ module.exports = {
                         .setColor(Colors.Orange)
                         .setTitle(`**Selection**`)
                         .setThumbnail(result.thumbnail)
-                        .setDescription(`**[${song.title}](${song.url})** added to playlist\n Asked by @${result.requestedBy.username}`)
+                        .setDescription(`**[${song.title}](${song.url})** added to playlist\n Requested by @${result.requestedBy.username}`)
                 ]
+            }).then(msg => {
+                setTimeout(() => msg.delete(), SHORT_TIMER);
+
+            }).catch(error => {
+                console.log(error);
             });
         }
         else if (interaction.options.getSubcommand() === "playlist") {
+            songUnique = false;
 
             // Search for the playlist using the discord-player
             let url = interaction.options.getString("url")
@@ -167,12 +180,19 @@ module.exports = {
                         .setColor(Colors.Orange)
                         .setTitle(`**Selection**`)
                         .setThumbnail(result.thumbnail)
-                        .setDescription(`**${result.tracks.length} songs from [${playlist.title}](${playlist.url})** added\n Asked by @${result.requestedBy.username}`)
+                        .setDescription(`**${result.tracks.length} songs from [${playlist.title}](${playlist.url})** added\n Requested by @${result.requestedBy.username}`)
                 ]
+            }).then(msg => {
+                setTimeout(() => msg.delete(), SHORT_TIMER);
+
+            }).catch(error => {
+                console.log(error);
             });
         }
         else if (interaction.options.getSubcommand() === "search-song") {
+            songUnique = true;
             const player = useMainPlayer();
+            const queue = useQueue(interaction.guild.id);
             let query = interaction.options.getString("search");
             const results = await player.search(query, {
                 requestedBy: interaction.user,
@@ -228,7 +248,7 @@ module.exports = {
                             .setColor(Colors.Orange)
                             .setTitle(`**Selection**`)
                             .setThumbnail(result.thumbnail)
-                            .setDescription(`${result.title} - ${result.author} [${result.duration}]\n Asked by @${result.requestedBy.username}`)
+                            .setDescription(`${result.title} - ${result.author} [${result.duration}]\n Requested by @${result.requestedBy.username}`)
                     ],
                     fetchReply: true
                 }).then(msg => {
@@ -244,6 +264,7 @@ module.exports = {
             })
 
         } else if (interaction.options.getSubcommand() === "search-playlist") {
+            songUnique = false;
             let query = interaction.options.getString("search")
             const playlistData = await getPlaylist(query);
             if (!playlistData) return await interaction.reply("No playlist found");
